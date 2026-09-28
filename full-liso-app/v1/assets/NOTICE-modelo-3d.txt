@@ -1,0 +1,11 @@
+Modelo: Standard T-shirt, autor Pieter Ferreira.
+Fuente declarada dentro del GLB: https://sketchfab.com/3d-models/standard-t-shirt-1815c01895bd4538bc0bd05c3394698d
+Licencia declarada: Creative Commons Attribution 4.0 (CC BY 4.0).
+https://creativecommons.org/licenses/by/4.0/
+Archivo obtenido del repositorio usado por las etiquetas originales de Full Liso:
+https://santibuffaz19.github.io/modelos-3d-full-liso/Remera%20Clasica%20Hombre%20(2).glb
+Cambios en ejecución: escala aproximada, material de color y proyección de logos.
+El GLB original se conserva sin modificar. Derivado local remera-preview-limpia.glb: se retiraron 14 mallas auxiliares con opacidad original cero, manteniendo intactos los vértices, normales, UV e índices de la malla visible y la transformación original. Este derivado conserva la atribución y licencia CC BY 4.0. No se utilizó para generar las fotos 2D.
+La vista 3D es orientativa y no certifica el calce ni la ubicación industrial.
+
+Three.js 0.160.1 y módulos complementarios: licencia MIT en vendor/LICENSE-three.txt.
