@@ -11,3 +11,5 @@
 .compact .workspace>.preview{top:calc(var(--fl-head-height,0px) + 12px)}.compact-steps,.quantity-field,.preview,#summary{scroll-margin-top:calc(var(--fl-head-height,0px) + 16px)}
 
 .fl-app[data-submitting=true] #compact-next{white-space:normal;font-size:12px}
+
+.order-customer{display:flex;flex-direction:column;gap:8px;font-size:14px;font-weight:600;margin:18px 0}.order-customer input{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:12px;border:1px solid #d7d7d7;border-radius:10px;background:#fff;color:#171717}.order-customer small{font-weight:400;color:#666;font-size:12px}

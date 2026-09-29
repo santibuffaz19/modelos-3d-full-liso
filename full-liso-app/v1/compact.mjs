@@ -2,9 +2,13 @@ import {document} from './editor-dom.mjs';
 // Alternative presentation; editing, pricing, stock and exports share the
 // existing engine. The page supplies a separate local draft database.
 const engine=await import('./app-v2.mjs');
-import {submitDesign} from './order-flow.mjs';
+import {submitDesign,prepareDesign,updatePreparedCustomer,pausePreparationStatus,showSubmitError} from './order-flow.mjs';
 const $=s=>document.querySelector(s),steps=['prendas','diseno','resumen'];
-let step='prendas',busy=false,syncPending=false;
+let step='prendas',busy=false,syncPending=false,retry=false,preloadTimer;
+const customer=document.createElement('label');customer.className='order-customer';customer.textContent='Nombre o empresa para identificar el pedido';const nameInput=document.createElement('input');nameInput.id='order-customer-name';nameInput.type='text';nameInput.maxLength=70;nameInput.autocomplete='name';nameInput.placeholder='Ej. Juan Pérez · Taller Norte';customer.append(nameInput);const help=document.createElement('small');help.textContent='Opcional. Usamos este nombre para organizar tus archivos.';customer.append(help);$('#summary').before(customer);
+try{nameInput.value=sessionStorage.getItem('fl-order-customer')||'';}catch{}
+nameInput.addEventListener('blur',()=>{void updatePreparedCustomer().catch(()=>{});});
+nameInput.addEventListener('input',()=>{try{sessionStorage.setItem('fl-order-customer',nameInput.value);}catch{}});
 $('.quantity-field').insertBefore($('#open-size-guide'),$('.quantity-group-caption'));
 const counts=()=>({custom:Number($('[data-mode-count="custom"]').textContent)||0,plain:Number($('[data-mode-count="plain"]').textContent)||0,logos:$('#logo-list').querySelectorAll('.logo-row-shell').length});
 function message(text){$('#compact-message').textContent=text;$('#compact-message').hidden=!text;}
@@ -16,7 +20,7 @@ function sync(){
  $('#compact-plain-design').hidden=!$('#design-controls').hidden;
  $('#group-help').textContent=$('#design-controls').hidden?'Se suman sin estampa. Tu diseño se conserva.':'Comparten el diseño que armes en el paso 2.';
  $('#compact-summary-empty').hidden=total>0;
- $('#compact-next').textContent=busy?'Verificando stock…':step==='prendas'?(q.custom?'Seguir con mi logo →':q.plain?'Revisar pedido →':'Seguir →'):step==='diseno'?'Revisar pedido →':'Agregar al carrito';
+ $('#compact-next').textContent=busy?'Verificando stock…':step==='prendas'?(q.custom?'Seguir con mi logo →':q.plain?'Revisar pedido →':'Seguir →'):step==='diseno'?'Revisar pedido →':retry?'Reintentar carga':'Agregar al carrito';
  $('#compact-next').disabled=busy;
  $('#compact-back').hidden=step==='prendas';
  $('[data-step-to="prendas"] .nav-number').classList.toggle('complete',total>0);
@@ -27,6 +31,7 @@ function showStep(next,{scroll=false,focus=false}={}){
  step=next;document.body.dataset.step=next;message('');
  for(const name of steps){const selected=name===next;$('#panel-'+name).hidden=!selected;const tab=$('#tab-'+name);tab.setAttribute('aria-selected',String(selected));tab.tabIndex=selected?0:-1;}
  if(next==='diseno'&&counts().custom&&$('#design-controls').hidden)$('[data-mode="custom"]').click();
+ clearTimeout(preloadTimer);pausePreparationStatus();if(next==='resumen')preloadTimer=setTimeout(()=>{if(!busy)void prepareDesign(engine).catch(()=>{});},400);
  sync();if(focus)$('#tab-'+next).focus({preventScroll:true});
  if(scroll)requestAnimationFrame(()=>$('.compact-steps').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth',block:'start'}));
 }
@@ -58,7 +63,7 @@ $('#compact-next').onclick=async()=>{
   if(q.custom){showStep('diseno',{scroll:true});return;}
  }
  const save=step==='resumen';
- if(await validate()){showStep('resumen',{scroll:true});if(save){busy=true;sync();document.body.dataset.submitting='true';$('.compact-main').inert=true;$('#restore').disabled=true;$('#compact-back').disabled=true;try{await submitDesign(engine);}catch(error){message(error.message);}finally{document.body.dataset.submitting='false';$('.compact-main').inert=false;$('#restore').disabled=false;$('#compact-back').disabled=false;busy=false;sync();}}}
+ if(await validate()){showStep('resumen',{scroll:true});if(save){clearTimeout(preloadTimer);busy=true;sync();document.body.dataset.submitting='true';$('.compact-main').inert=true;$('#restore').disabled=true;$('#compact-back').disabled=true;try{await submitDesign(engine);retry=false;}catch(error){retry=true;message(error.message);showSubmitError(error.message);}finally{document.body.dataset.submitting='false';$('.compact-main').inert=false;$('#restore').disabled=false;$('#compact-back').disabled=false;busy=false;sync();}}}
 };
 // A single, always-visible primary action replaces the duplicated review/save
 // buttons. The original handlers and validation remain in use.
